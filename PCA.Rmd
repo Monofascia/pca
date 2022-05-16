@@ -1,0 +1,75 @@
+---
+title: "PCA"
+author: "E.Chiola & P.Iezzi"
+date: "21/9/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Dati economoci su Paesi EU
+
+Caricamento dataset e trasformazionie variabili in numeriche
+```{r}
+library(readr)
+dati_economici <- read_delim("C:/Users/Patrizio/Desktop/TUTTO/Ud'A/CLEBA/SUPERATE/DATA SCIENCE/4 progetto- Data Science/dati economici.csv", ";", escape_double = FALSE, col_types = cols(`Popolazione (Millioni)` = col_number(), `PIL (Miliardi)` = col_number(), `Tasso di crescita (%)` = col_number(),         `Disoccupazione (%)` = col_number(), `Inflazione (%)` = col_number(), `Debito Pubblico (% del PIL)` = col_number()),      trim_ws = TRUE)
+View(dati_economici)
+attach(dati_economici)
+
+```
+
+Si pulisce il dataset da "N/A" presenti e si crea una nuova matrice eliminando la prima colonna contenente i nomi dei Paesi. Nel comando rownames viene indicato il nome da apporre alle righe.
+
+```{r warning=FALSE}
+dati_economici1<-na.omit(dati_economici) #elimino gli NA
+matrix0<- data.matrix(dati_economici1) #creo una nuova matrice
+matrix1<-matrix0[,2:ncol(matrix0)] #creo nuova matrice senza la colonna 1
+rownames(matrix1)<-dati_economici1$Paese #indico il nome delle righe richiamando la variabile (che non è) paese
+```
+
+## Principal component analysis
+Calcolo Loadings e deviazione standard spiegata
+
+```{r}
+dati_economici_pca<- prcomp(matrix1, center = TRUE, scale. = TRUE) #principal components
+dati_economici_pca #mostriamo i loadings
+```
+
+Si osserva che i loadings della PC1 pongono un peso su PIL, POPOLAZIONE e DEBITO. Il loading della PC2, avendo già battezzato PIL nella PC1, dà più peso a DISOCCUPAZIONE e DEBITO PUBBLICO consentendo così di concludere che queste due variabili siano direttamente proporzionali. 
+
+```{r}
+summary(dati_economici_pca)
+```
+Ponendo una PVE (proportion of variance explained) accettabile pari o superiore a 80%, si dovranno considerare per l'eventuale regressione le prima tre componenti principali (PC1,PC2,PC3)
+<br>
+Tabella indicativa della  percentuale di varianza spiegata. 
+```{r}
+screeplot(dati_economici_pca, type = c("lines")) #elbow non visibile
+```
+
+
+```{r}
+options(scipen = 20) #annotazione scientifica a partire da 20 cifre
+
+```
+
+Scores
+
+```{r}
+scores<- dati_economici_pca$x
+scores
+         
+```
+
+Grafico di confronto PC1, PC2 e relativi scores
+
+```{r}
+biplot(dati_economici_pca, col=c("black", "blue"), arrow.len=0, var.axes=FALSE)
+
+```
+
+Osservando il grafico si nota come Popolazione e PIL hanno lo stesso peso sia in PC1 sia in PC2. 
+All'esatto centro del grafico c'è un evidente cluster. 
+
+La Grecia è molto vicina a disoccupazione e debito pubblico, come evidenziato dal punteggio elevato (score) sulla PC2 , e diagonalmente molto distante dalla variabile tasso di crescita. Si conclude che la grecia sia una nazione in evidente crisi. 
+
